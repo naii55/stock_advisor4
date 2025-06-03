@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบวิเคราะห์หุ้น</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+  <h1 class="mb-4">📊 ระบบวิเคราะห์หุ้น</h1>
+
+  <form method="post" class="mb-4">
+    <div class="form-check">
+      <input class="form-check-input" type="radio" name="mode" value="manual" checked>
+      <label class="form-check-label">ป้อนชื่อหุ้นเอง (เช่น AOT,PTT)</label>
+    </div>
+    <input class="form-control mb-2" type="text" name="tickers">
+
+    <div class="form-check">
+      <input class="form-check-input" type="radio" name="mode" value="all">
+      <label class="form-check-label">วิเคราะห์หุ้นทั้งหมดในระบบ</label>
+    </div>
+
+    <div class="mt-2">
+      <label>กรองตาม Sector:</label>
+      <input class="form-control" type="text" name="sector" placeholder="เช่น Energy, Finance...">
+    </div>
+
+    <button class="btn btn-primary mt-3" type="submit">วิเคราะห์</button>
+    <a href="/export" class="btn btn-success mt-3">Export CSV</a>
+  </form>
+
+  {% if results %}
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th>หุ้น</th>
+          <th>Sector</th>
+          <th>ราคา</th>
+          <th>P/E</th>
+          <th>ROE</th>
+          <th>ปันผล</th>
+          <th>Market Cap</th>
+          <th>P/B</th>
+          <th>Beta</th>
+          <th>สรุป</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stock in results %}
+        <tr>
+          <td>{{ stock.symbol }}</td>
+          <td>{{ stock.sector }}</td>
+          <td>{{ stock.current_price }}</td>
+          <td>{{ stock.pe }}</td>
+          <td>{{ stock.roe }}</td>
+          <td>{{ stock.dividend }}</td>
+          <td>{{ stock.market_cap }}</td>
+          <td>{{ stock.pb }}</td>
+          <td>{{ stock.beta }}</td>
+          <td>
+            {% for item in stock.summary %}
+              <div>{{ item }}</div>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h4>📈 กราฟราคาย้อนหลัง 5 วัน</h4>
+  <div>
+    {% for stock in results %}
+      <h5>{{ stock.symbol }}</h5>
+      <canvas id="chart_{{ loop.index0 }}" height="100"></canvas>
+      <script>
+        const ctx{{ loop.index0 }} = document.getElementById('chart_{{ loop.index0 }}');
+        new Chart(ctx{{ loop.index0 }}, {
+          type: 'line',
+          data: {
+            labels: {{ stock.history.keys() | list | safe }},
+            datasets: [{
+              label: 'ราคา (บาท)',
+              data: {{ stock.history.values() | list | safe }},
+              borderColor: 'blue',
+              tension: 0.3
+            }]
+          }
+        });
+      </script>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>
